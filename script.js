@@ -80,11 +80,6 @@ function renderMenu() {
   updateCartBar();
 }
 
-document.getElementById('add-all-btn').addEventListener('click', () => {
-  renderCartItems();
-  showSection('cart-section');
-});
-
 function cartTotal() {
   return Object.values(cart).reduce((sum, i) => sum + i.price * i.quantity, 0);
 }
