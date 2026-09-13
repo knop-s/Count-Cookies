@@ -1,5 +1,5 @@
 // ===== CONFIG — edit these =====
-const WEB_APP_URL = "PASTE_YOUR_APPS_SCRIPT_WEB_APP_URL_HERE";
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzniFn1qGb0zAwzJIHL_5XNSpexFxCJsRizuKPS3xJ-jkW-e8d9BRyshW6uvo70enuI/exec";
 const DELIVERY_FEE = 50; // THB
 // =================================
 
