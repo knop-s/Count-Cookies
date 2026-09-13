@@ -94,28 +94,19 @@ function updateCartBar() {
   document.getElementById('cart-bar-text').textContent = `${count} item${count > 1 ? 's' : ''} · ${cartTotal()} THB`;
 }
 
-function renderCart(containerId) {
-  const container = document.getElementById(containerId);
-  container.innerHTML = '';
-  Object.entries(cart).forEach(([flavor, info]) => {
-    const line = document.createElement('div');
-    line.className = 'cart-line';
-    line.innerHTML = `<span>${flavor} × ${info.quantity}</span><span>${info.price * info.quantity} THB</span>`;
-    container.appendChild(line);
-  });
-}
-
-function renderCheckoutItems() {
-  const container = document.getElementById('checkout-items');
-  const placeOrderBtn = document.getElementById('place-order-btn');
+// Editable quantity list — Cart page (adjust or remove before checkout)
+function renderCartItems() {
+  const container = document.getElementById('cart-items');
+  const toCheckoutBtn = document.getElementById('to-checkout-btn');
   container.innerHTML = '';
 
   if (Object.keys(cart).length === 0) {
     container.innerHTML = '<p class="status-text">Your cart is empty.</p>';
-    placeOrderBtn.disabled = true;
+    toCheckoutBtn.disabled = true;
+    document.getElementById('cart-subtotal').textContent = '0 THB';
     return;
   }
-  placeOrderBtn.disabled = false;
+  toCheckoutBtn.disabled = false;
 
   Object.entries(cart).forEach(([flavor, info]) => {
     const line = document.createElement('div');
@@ -132,16 +123,28 @@ function renderCheckoutItems() {
     line.querySelector('.minus').addEventListener('click', () => {
       info.quantity--;
       if (info.quantity <= 0) delete cart[flavor];
-      renderCheckoutItems();
-      updateCheckoutTotals();
+      renderCartItems();
       updateCartBar();
     });
     line.querySelector('.plus').addEventListener('click', () => {
       info.quantity++;
-      renderCheckoutItems();
-      updateCheckoutTotals();
+      renderCartItems();
       updateCartBar();
     });
+    container.appendChild(line);
+  });
+
+  document.getElementById('cart-subtotal').textContent = `${cartTotal()} THB`;
+}
+
+// Static, final, read-only list — Checkout page (nothing editable here)
+function renderCheckoutItems() {
+  const container = document.getElementById('checkout-items');
+  container.innerHTML = '';
+  Object.entries(cart).forEach(([flavor, info]) => {
+    const line = document.createElement('div');
+    line.className = 'cart-line';
+    line.innerHTML = `<span>${flavor} × ${info.quantity}</span><span>${info.price * info.quantity} THB</span>`;
     container.appendChild(line);
   });
 }
@@ -160,8 +163,7 @@ function showSection(id) {
 }
 
 document.getElementById('view-cart-btn').addEventListener('click', () => {
-  renderCart('cart-items');
-  document.getElementById('cart-subtotal').textContent = `${cartTotal()} THB`;
+  renderCartItems();
   showSection('cart-section');
 });
 
