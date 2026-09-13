@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>COUNT — Pre-Order</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Permanent+Marker&family=Patrick+Hand&family=Jost:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="site-header">
+  <img src="images/logo.png" alt="COUNT logo" class="logo-badge">
+  <div>
+    <h1>COUNT</h1>
+    <p class="header-subtitle">Handmade Cookies · Pre-Order</p>
+  </div>
+</header>
+<p class="tagline">Small-batch cookies, baked to order. Choose your flavors below and we'll bake fresh for your delivery date.</p>
+<svg class="divider" viewBox="0 0 600 20" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <path d="M0 10 Q 15 2, 30 10 T 60 10 T 90 10 T 120 10 T 150 10 T 180 10 T 210 10 T 240 10 T 270 10 T 300 10 T 330 10 T 360 10 T 390 10 T 420 10 T 450 10 T 480 10 T 510 10 T 540 10 T 570 10 T 600 10"/>
+</svg>
+
+<main>
+  <section id="menu-section">
+    <h2>This week's cookies</h2>
+    <p id="menu-status" class="status-text">Loading the menu…</p>
+    <div id="menu-grid" class="menu-grid"></div>
+  </section>
+
+  <section id="cart-section" class="hidden">
+    <h2>Your cart</h2>
+    <div id="cart-items"></div>
+    <div class="summary-row">
+      <span>Subtotal</span>
+      <span id="cart-subtotal">0 THB</span>
+    </div>
+    <button id="to-checkout-btn" class="primary-btn">Proceed to checkout</button>
+    <button id="back-to-menu-btn" class="text-btn" type="button">Add more cookies</button>
+  </section>
+
+  <section id="checkout-section" class="hidden">
+    <h2>Delivery details</h2>
+    <form id="checkout-form">
+      <label>Name
+        <input type="text" id="cust-name" required>
+      </label>
+      <label>Phone
+        <input type="tel" id="cust-phone" required>
+      </label>
+      <label>Email
+        <input type="email" id="cust-email" required>
+      </label>
+      <label>Delivery address
+        <textarea id="cust-address" required></textarea>
+      </label>
+      <div class="field-row">
+        <label>Delivery date
+          <input type="date" id="delivery-date" required>
+        </label>
+        <label>Delivery time
+          <input type="time" id="delivery-time" required>
+        </label>
+      </div>
+
+      <h3>Order summary</h3>
+      <div id="checkout-items"></div>
+      <div class="summary-row"><span>Subtotal</span><span id="checkout-subtotal">0 THB</span></div>
+      <div class="summary-row"><span>Delivery</span><span id="checkout-delivery">50 THB</span></div>
+      <div class="summary-row total"><span>Total</span><span id="checkout-total">0 THB</span></div>
+
+      <h3>Payment</h3>
+      <p>Scan to pay via PromptPay, then place your order below — we'll confirm once payment is received.</p>
+      <img src="images/promptpay-qr.jpg" alt="PromptPay QR code" class="qr-image">
+      <p class="bank-details">Account name: [Your Name]<br>Bank: [Your Bank] — [Account Number]</p>
+
+      <button type="submit" class="primary-btn" id="place-order-btn">Place order</button>
+      <button type="button" id="back-to-cart-btn" class="text-btn">Back to cart</button>
+    </form>
+  </section>
+
+  <section id="confirmation-section" class="hidden">
+    <h2>Order received</h2>
+    <p>Thank you! A confirmation has been sent to your email.</p>
+    <p>Order reference: <strong id="confirmation-order-id"></strong></p>
+  </section>
+</main>
+
+<div id="cart-bar" class="cart-bar hidden">
+  <span id="cart-bar-text">0 items · 0 THB</span>
+  <button id="view-cart-btn" type="button">View cart</button>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
