@@ -31,6 +31,7 @@ function renderMenu() {
   const grid = document.getElementById('menu-grid');
   grid.innerHTML = '';
   menuSelections = {};
+  updateCartBar();
   menu.forEach(item => {
     const isSoldOut = String(item.soldOut).toLowerCase() === 'yes';
     const card = document.createElement('div');
@@ -55,12 +56,14 @@ function renderMenu() {
       qty++;
       qtyValue.textContent = qty;
       menuSelections[item.flavor] = { price: Number(item.price), quantity: qty };
+      updateCartBar();
     });
     minusBtn.addEventListener('click', () => {
       if (qty > 0) qty--;
       qtyValue.textContent = qty;
       if (qty === 0) delete menuSelections[item.flavor];
       else menuSelections[item.flavor] = { price: Number(item.price), quantity: qty };
+      updateCartBar();
     });
     grid.appendChild(card);
   });
@@ -86,12 +89,20 @@ function cartCount() {
   return Object.values(cart).reduce((sum, i) => sum + i.quantity, 0);
 }
 
+function stagedTotal() {
+  return Object.values(menuSelections).reduce((sum, i) => sum + i.price * i.quantity, 0);
+}
+function stagedCount() {
+  return Object.values(menuSelections).reduce((sum, i) => sum + i.quantity, 0);
+}
+
 function updateCartBar() {
   const bar = document.getElementById('cart-bar');
-  const count = cartCount();
+  const count = cartCount() + stagedCount();
+  const total = cartTotal() + stagedTotal();
   if (count === 0) { bar.classList.add('hidden'); return; }
   bar.classList.remove('hidden');
-  document.getElementById('cart-bar-text').textContent = `${count} item${count > 1 ? 's' : ''} · ${cartTotal()} THB`;
+  document.getElementById('cart-bar-text').textContent = `${count} item${count > 1 ? 's' : ''} · ${total} THB`;
 }
 
 // Editable quantity list — Cart page (adjust or remove before checkout)
