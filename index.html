@@ -27,6 +27,7 @@
     <h2>This week's cookies</h2>
     <p id="menu-status" class="status-text">Loading the menu…</p>
     <div id="menu-grid" class="menu-grid"></div>
+    <button id="add-all-btn" class="primary-btn" type="button">Add to cart</button>
   </section>
 
   <section id="cart-section" class="hidden">
@@ -73,7 +74,14 @@
       <h3>Payment</h3>
       <p>Scan to pay via PromptPay, then place your order below — we'll confirm once payment is received.</p>
       <img src="Pictures/promptpay-qr.JPG" alt="PromptPay QR code" class="qr-image">
-      <p class="bank-details">Account name: ภณ บุญศิริเสริมสุข<br>Bank: ธนาคารกสิกรไทย </p>
+      <p class="bank-details">Account name: [Your Name]<br>Bank: [Your Bank] — [Account Number]</p>
+
+      <label>LINE ID (optional)
+        <input type="text" id="cust-line" placeholder="So we can reach you if needed">
+      </label>
+      <label>Upload payment slip (optional)
+        <input type="file" id="payment-slip" accept="image/*">
+      </label>
 
       <button type="submit" class="primary-btn" id="place-order-btn">Place order</button>
       <button type="button" id="back-to-cart-btn" class="text-btn">Back to cart</button>

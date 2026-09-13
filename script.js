@@ -13,6 +13,7 @@ const PLACEHOLDER_IMG = "data:image/svg+xml;utf8," + encodeURIComponent(
 
 let menu = [];
 let cart = {}; // { flavorName: { price, quantity } }
+let menuSelections = {}; // { flavorName: { price, quantity } } — staged picks not yet added to cart
 
 async function loadMenu() {
   const statusEl = document.getElementById('menu-status');
@@ -29,6 +30,7 @@ async function loadMenu() {
 function renderMenu() {
   const grid = document.getElementById('menu-grid');
   grid.innerHTML = '';
+  menuSelections = {};
   menu.forEach(item => {
     const isSoldOut = String(item.soldOut).toLowerCase() === 'yes';
     const card = document.createElement('div');
@@ -37,30 +39,39 @@ function renderMenu() {
       ${isSoldOut ? '<span class="sold-out-tag">Sold out</span>' : ''}
       <img src="${item.photoUrl || PLACEHOLDER_IMG}" alt="${item.flavor}">
       <p class="flavor-name">${item.flavor}</p>
+      ${item.description ? `<p class="flavor-desc">${item.description}</p>` : ''}
       <p class="flavor-price">${item.price} THB</p>
       <div class="qty-row">
         <button class="qty-btn minus" type="button" ${isSoldOut ? 'disabled' : ''}>−</button>
         <span class="qty-value">0</span>
         <button class="qty-btn plus" type="button" ${isSoldOut ? 'disabled' : ''}>+</button>
       </div>
-      <button class="add-btn" type="button" ${isSoldOut ? 'disabled' : ''}>${isSoldOut ? 'Sold out' : 'Add to cart'}</button>
     `;
     const qtyValue = card.querySelector('.qty-value');
     const minusBtn = card.querySelector('.minus');
     const plusBtn = card.querySelector('.plus');
-    const addBtn = card.querySelector('.add-btn');
     let qty = 0;
-    plusBtn.addEventListener('click', () => { qty++; qtyValue.textContent = qty; });
-    minusBtn.addEventListener('click', () => { if (qty > 0) qty--; qtyValue.textContent = qty; });
-    addBtn.addEventListener('click', () => {
-      if (qty === 0) return;
-      addToCart(item.flavor, Number(item.price), qty);
-      qty = 0;
-      qtyValue.textContent = 0;
+    plusBtn.addEventListener('click', () => {
+      qty++;
+      qtyValue.textContent = qty;
+      menuSelections[item.flavor] = { price: Number(item.price), quantity: qty };
+    });
+    minusBtn.addEventListener('click', () => {
+      if (qty > 0) qty--;
+      qtyValue.textContent = qty;
+      if (qty === 0) delete menuSelections[item.flavor];
+      else menuSelections[item.flavor] = { price: Number(item.price), quantity: qty };
     });
     grid.appendChild(card);
   });
 }
+
+document.getElementById('add-all-btn').addEventListener('click', () => {
+  const picks = Object.entries(menuSelections).filter(([, info]) => info.quantity > 0);
+  if (picks.length === 0) return;
+  picks.forEach(([flavor, info]) => addToCart(flavor, info.price, info.quantity));
+  renderMenu(); // resets all quantity displays back to 0
+});
 
 function addToCart(flavor, price, quantity) {
   if (!cart[flavor]) cart[flavor] = { price, quantity: 0 };
@@ -94,6 +105,54 @@ function renderCart(containerId) {
   });
 }
 
+function renderCheckoutItems() {
+  const container = document.getElementById('checkout-items');
+  const placeOrderBtn = document.getElementById('place-order-btn');
+  container.innerHTML = '';
+
+  if (Object.keys(cart).length === 0) {
+    container.innerHTML = '<p class="status-text">Your cart is empty.</p>';
+    placeOrderBtn.disabled = true;
+    return;
+  }
+  placeOrderBtn.disabled = false;
+
+  Object.entries(cart).forEach(([flavor, info]) => {
+    const line = document.createElement('div');
+    line.className = 'cart-line editable';
+    line.innerHTML = `
+      <span class="cart-line-name">${flavor}</span>
+      <div class="qty-row">
+        <button class="qty-btn minus" type="button">−</button>
+        <span class="qty-value">${info.quantity}</span>
+        <button class="qty-btn plus" type="button">+</button>
+      </div>
+      <span class="cart-line-price">${info.price * info.quantity} THB</span>
+    `;
+    line.querySelector('.minus').addEventListener('click', () => {
+      info.quantity--;
+      if (info.quantity <= 0) delete cart[flavor];
+      renderCheckoutItems();
+      updateCheckoutTotals();
+      updateCartBar();
+    });
+    line.querySelector('.plus').addEventListener('click', () => {
+      info.quantity++;
+      renderCheckoutItems();
+      updateCheckoutTotals();
+      updateCartBar();
+    });
+    container.appendChild(line);
+  });
+}
+
+function updateCheckoutTotals() {
+  const subtotal = cartTotal();
+  document.getElementById('checkout-subtotal').textContent = `${subtotal} THB`;
+  document.getElementById('checkout-delivery').textContent = `${DELIVERY_FEE} THB`;
+  document.getElementById('checkout-total').textContent = `${subtotal + DELIVERY_FEE} THB`;
+}
+
 function showSection(id) {
   ['menu-section', 'cart-section', 'checkout-section', 'confirmation-section'].forEach(s => {
     document.getElementById(s).classList.toggle('hidden', s !== id);
@@ -110,13 +169,19 @@ document.getElementById('back-to-menu-btn').addEventListener('click', () => show
 document.getElementById('back-to-cart-btn').addEventListener('click', () => showSection('cart-section'));
 
 document.getElementById('to-checkout-btn').addEventListener('click', () => {
-  renderCart('checkout-items');
-  const subtotal = cartTotal();
-  document.getElementById('checkout-subtotal').textContent = `${subtotal} THB`;
-  document.getElementById('checkout-delivery').textContent = `${DELIVERY_FEE} THB`;
-  document.getElementById('checkout-total').textContent = `${subtotal + DELIVERY_FEE} THB`;
+  renderCheckoutItems();
+  updateCheckoutTotals();
   showSection('checkout-section');
 });
+
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result.split(',')[1]);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
 
 document.getElementById('checkout-form').addEventListener('submit', async (e) => {
   e.preventDefault();
@@ -129,6 +194,7 @@ document.getElementById('checkout-form').addEventListener('submit', async (e) =>
     name: document.getElementById('cust-name').value,
     phone: document.getElementById('cust-phone').value,
     email: document.getElementById('cust-email').value,
+    lineId: document.getElementById('cust-line').value,
     address: document.getElementById('cust-address').value,
     deliveryDate: document.getElementById('delivery-date').value,
     deliveryTime: document.getElementById('delivery-time').value,
@@ -140,9 +206,18 @@ document.getElementById('checkout-form').addEventListener('submit', async (e) =>
     total: subtotal + DELIVERY_FEE
   };
 
+  const slipFile = document.getElementById('payment-slip').files[0];
+  if (slipFile) {
+    try {
+      orderData.paymentSlipBase64 = await fileToBase64(slipFile);
+      orderData.paymentSlipName = slipFile.name;
+      orderData.paymentSlipType = slipFile.type;
+    } catch (err) {
+      // If the slip can't be read for some reason, continue without blocking the order
+    }
+  }
+
   try {
-    // Note: no custom Content-Type header on purpose — this avoids a
-    // browser/Apps Script quirk that would otherwise block the request.
     const res = await fetch(WEB_APP_URL, {
       method: 'POST',
       body: JSON.stringify(orderData)
