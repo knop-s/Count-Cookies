@@ -206,6 +206,25 @@ h3 {
   z-index: 1;
 }
 
+.badge-tag {
+  position: absolute;
+  top: -4px;
+  left: 8px;
+  font-family: var(--font-display);
+  font-size: 0.7rem;
+  padding: 4px 12px;
+  border-radius: 999px;
+  z-index: 1;
+}
+.badge-tag.signature {
+  background: var(--ink);
+  color: var(--cream);
+}
+.badge-tag.best-seller {
+  background: var(--pink-deep);
+  color: var(--ink);
+}
+
 .cart-line {
   display: flex;
   justify-content: space-between;

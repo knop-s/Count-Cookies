@@ -49,6 +49,7 @@ function renderMenu() {
     const card = document.createElement('div');
     card.className = 'cookie-card';
     card.innerHTML = `
+      ${item.badge ? `<span class="badge-tag ${item.badge.toLowerCase().replace(/[^a-z0-9]+/g, '-')}">${item.badge}</span>` : ''}
       ${isSoldOut ? '<span class="sold-out-tag">Sold out</span>' : ''}
       <img src="${item.photoUrl || PLACEHOLDER_IMG}" alt="${item.flavor}">
       <p class="flavor-name">${item.flavor}</p>
