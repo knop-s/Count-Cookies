@@ -12,8 +12,19 @@ const PLACEHOLDER_IMG = "data:image/svg+xml;utf8," + encodeURIComponent(
 );
 
 let menu = [];
-let cart = {}; // { flavorName: { price, quantity } }
-let menuSelections = {}; // { flavorName: { price, quantity } } — staged picks not yet added to cart
+let cart = {}; // { flavorName: { price, quantity } } — the single source of truth everywhere
+
+function getCartQuantity(flavor) {
+  return (cart[flavor] && cart[flavor].quantity) || 0;
+}
+
+function setCartQuantity(flavor, price, quantity) {
+  if (quantity <= 0) {
+    delete cart[flavor];
+  } else {
+    cart[flavor] = { price, quantity };
+  }
+}
 
 async function loadMenu() {
   const statusEl = document.getElementById('menu-status');
@@ -27,13 +38,14 @@ async function loadMenu() {
   }
 }
 
+// The quantity shown on each card always reflects what's actually in the
+// cart right now — tapping +/- updates the cart immediately, live.
 function renderMenu() {
   const grid = document.getElementById('menu-grid');
   grid.innerHTML = '';
-  menuSelections = {};
-  updateCartBar();
   menu.forEach(item => {
     const isSoldOut = String(item.soldOut).toLowerCase() === 'yes';
+    const currentQty = getCartQuantity(item.flavor);
     const card = document.createElement('div');
     card.className = 'cookie-card';
     card.innerHTML = `
@@ -44,43 +56,34 @@ function renderMenu() {
       <p class="flavor-price">${item.price} THB</p>
       <div class="qty-row">
         <button class="qty-btn minus" type="button" ${isSoldOut ? 'disabled' : ''}>−</button>
-        <span class="qty-value">0</span>
+        <span class="qty-value">${currentQty}</span>
         <button class="qty-btn plus" type="button" ${isSoldOut ? 'disabled' : ''}>+</button>
       </div>
     `;
     const qtyValue = card.querySelector('.qty-value');
     const minusBtn = card.querySelector('.minus');
     const plusBtn = card.querySelector('.plus');
-    let qty = 0;
     plusBtn.addEventListener('click', () => {
-      qty++;
-      qtyValue.textContent = qty;
-      menuSelections[item.flavor] = { price: Number(item.price), quantity: qty };
+      const newQty = getCartQuantity(item.flavor) + 1;
+      setCartQuantity(item.flavor, Number(item.price), newQty);
+      qtyValue.textContent = newQty;
       updateCartBar();
     });
     minusBtn.addEventListener('click', () => {
-      if (qty > 0) qty--;
-      qtyValue.textContent = qty;
-      if (qty === 0) delete menuSelections[item.flavor];
-      else menuSelections[item.flavor] = { price: Number(item.price), quantity: qty };
+      const newQty = Math.max(0, getCartQuantity(item.flavor) - 1);
+      setCartQuantity(item.flavor, Number(item.price), newQty);
+      qtyValue.textContent = newQty;
       updateCartBar();
     });
     grid.appendChild(card);
   });
+  updateCartBar();
 }
 
 document.getElementById('add-all-btn').addEventListener('click', () => {
-  const picks = Object.entries(menuSelections).filter(([, info]) => info.quantity > 0);
-  if (picks.length === 0) return;
-  picks.forEach(([flavor, info]) => addToCart(flavor, info.price, info.quantity));
-  renderMenu(); // resets all quantity displays back to 0
+  renderCartItems();
+  showSection('cart-section');
 });
-
-function addToCart(flavor, price, quantity) {
-  if (!cart[flavor]) cart[flavor] = { price, quantity: 0 };
-  cart[flavor].quantity += quantity;
-  updateCartBar();
-}
 
 function cartTotal() {
   return Object.values(cart).reduce((sum, i) => sum + i.price * i.quantity, 0);
@@ -89,20 +92,12 @@ function cartCount() {
   return Object.values(cart).reduce((sum, i) => sum + i.quantity, 0);
 }
 
-function stagedTotal() {
-  return Object.values(menuSelections).reduce((sum, i) => sum + i.price * i.quantity, 0);
-}
-function stagedCount() {
-  return Object.values(menuSelections).reduce((sum, i) => sum + i.quantity, 0);
-}
-
 function updateCartBar() {
   const bar = document.getElementById('cart-bar');
-  const count = cartCount() + stagedCount();
-  const total = cartTotal() + stagedTotal();
+  const count = cartCount();
   if (count === 0) { bar.classList.add('hidden'); return; }
   bar.classList.remove('hidden');
-  document.getElementById('cart-bar-text').textContent = `${count} item${count > 1 ? 's' : ''} · ${total} THB`;
+  document.getElementById('cart-bar-text').textContent = `${count} item${count > 1 ? 's' : ''} · ${cartTotal()} THB`;
 }
 
 // Editable quantity list — Cart page (adjust or remove before checkout)
@@ -178,7 +173,10 @@ document.getElementById('view-cart-btn').addEventListener('click', () => {
   showSection('cart-section');
 });
 
-document.getElementById('back-to-menu-btn').addEventListener('click', () => showSection('menu-section'));
+document.getElementById('back-to-menu-btn').addEventListener('click', () => {
+  renderMenu(); // re-sync quantities shown, in case the cart changed elsewhere
+  showSection('menu-section');
+});
 document.getElementById('back-to-cart-btn').addEventListener('click', () => showSection('cart-section'));
 
 document.getElementById('to-checkout-btn').addEventListener('click', () => {
